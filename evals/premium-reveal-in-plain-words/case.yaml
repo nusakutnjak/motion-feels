@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: premium-reveal-in-plain-words
+expected_outcome: |
+  Picks a slow, premium feel (Luxurious, or Gentle) for the photo reveal, says the plan in plain words, and gives CSS with the feel's exact values, a play-once reveal and a reduced-motion fallback. It never asks the user to pick technical values.

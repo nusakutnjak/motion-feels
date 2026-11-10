@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: cheap-menu-feedback
+expected_outcome: |
+  Explains in plain words what makes it feel cheap and jumpy, then fixes it: no scale(0), less or no overshoot, 400 ms or less, named properties instead of all, and shows before and after values.

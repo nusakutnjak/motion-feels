@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: bouncy-is-ambiguous
+expected_outcome: |
+  Treats 'bouncy' as ambiguous and either asks one plain-language question (bounce like a ball landing, or overshoot a little and settle) or shows both options side by side, without technical terms.

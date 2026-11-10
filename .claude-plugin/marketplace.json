@@ -1,0 +1,15 @@
+{
+  "name": "motion-feels",
+  "owner": {
+    "name": "Nuša Kutnjak"
+  },
+  "description": "Website motion in everyday words: describe how an animation should feel and get the right speed and easing curve.",
+  "plugins": [
+    {
+      "name": "motion-feels",
+      "source": "./",
+      "description": "Website motion in everyday words: say how an animation should feel and get the right speed and easing curve (CSS, GSAP, springs), plus when-not-to-animate rules, build rules and a motion review checklist.",
+      "version": "1.0.0"
+    }
+  ]
+}

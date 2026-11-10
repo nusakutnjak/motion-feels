@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motion feels</title>
+<style>
+/* The 14 feels live in the FEELS list in the script below: one place for every speed and curve.
+   --slow multiplies every duration (1 = real speed, 2 = half speed, 4 = quarter speed). */
+:root {
+  --bg: #0e0e10;
+  --card: #17171a;
+  --stage: #111113;
+  --line: #26262b;
+  --text: #f1f0ec;
+  --muted: #8e8e96;
+  --lime: #d4ff4f;
+  --gA: #d4ff4f; --gB: #6aa8ff; --gC: #ff6b35; --gD: #ff7eb6; --gE: #c9c9cf;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; }
+button { font: inherit; }
+a { color: var(--lime); }
+
+.top { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 14px 24px; background: rgba(14,14,16,.88); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top h1 { margin: 0; font-size: 18px; font-weight: 650; }
+.top h1 small { color: var(--muted); font-weight: 400; font-size: 15px; }
+.top p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.controls { display: flex; gap: 10px; align-items: center; }
+.seg-label { font-size: 12px; color: var(--muted); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
+.seg button, .pill-btn { border: 0; background: transparent; color: var(--muted); padding: 5px 11px; border-radius: 999px; cursor: pointer; font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--text); color: #111; }
+.pill-btn { border: 1px solid var(--line); color: var(--text); }
+.pill-btn.primary { background: var(--lime); color: #111; border-color: var(--lime); font-weight: 600; }
+
+main { max-width: 1320px; margin: 0 auto; padding: 8px 24px 64px; }
+h2.group { margin: 36px 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+h2.group i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.lead { color: var(--muted); font-size: 14px; max-width: 720px; margin: 20px 0 0; }
+.lead b { color: var(--text); font-weight: 600; }
+
+/* Race: every feel over the same distance, started together */
+.race { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 10px; }
+.race-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.race-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.race-head span { font-size: 13px; color: var(--muted); }
+.lane { display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 14px; height: 30px; }
+.lane-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lane-name em { font-style: normal; color: var(--muted); font: 12px ui-monospace, Menlo, monospace; margin-left: 6px; }
+.lane-track { position: relative; height: 100%; border-left: 1px solid #3a3a40; border-right: 1px dashed #3a3a40; }
+.lane-track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid #222227; }
+.lane-dot { position: absolute; left: 0; top: 50%; width: 16px; height: 16px; margin-top: -8px; border-radius: 4px; background: var(--c); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+.stage { position: relative; height: 170px; background: var(--stage); display: grid; grid-template-columns: 140px 1fr; gap: 14px; padding: 14px; }
+.graph { width: 100%; height: 100%; }
+.graph .axis { stroke: #2c2c32; stroke-width: 1; fill: none; }
+.graph .guide { stroke: #2c2c32; stroke-width: 1; stroke-dasharray: 2 3; }
+.graph .curve { stroke: var(--c); stroke-width: 2; fill: none; stroke-linejoin: round; }
+.graph .gdot { fill: #fff; }
+.graph text { fill: #5c5c64; font: 7px ui-monospace, Menlo, monospace; }
+.probes { display: flex; flex-direction: column; justify-content: center; gap: 18px; min-width: 0; }
+.track { position: relative; height: 26px; border-bottom: 1px solid #2c2c32; }
+.sq { position: absolute; left: 0; bottom: 4px; width: 20px; height: 20px; border-radius: 5px; background: var(--c); }
+.enter { height: 70px; display: grid; place-items: center; border: 1px dashed #2c2c32; border-radius: 8px; }
+.mini { width: 70%; height: 46px; border-radius: 8px; background: #f1f0ec; display: flex; align-items: center; gap: 8px; padding: 0 10px; opacity: 0; }
+.mini i { width: 24px; height: 24px; border-radius: 6px; background: var(--c); flex: none; }
+.mini b { display: block; height: 7px; width: 70%; border-radius: 4px; background: #cfcfc8; }
+.mini b + b { width: 45%; margin-top: 6px; }
+.meta { display: flex; align-items: center; gap: 10px; padding: 12px 14px 2px; }
+.name { font-weight: 650; font-size: 16px; flex: 1; }
+.speed-tag { font: 12px ui-monospace, Menlo, monospace; color: var(--muted); }
+.replay { font-size: 12px; color: var(--text); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.card p { margin: 0; padding: 2px 14px; font-size: 13px; color: var(--muted); }
+.card p b { color: var(--text); font-weight: 600; }
+.card .shape { color: var(--text); padding-bottom: 4px; }
+.card .vals { font: 12px/1.6 ui-monospace, Menlo, monospace; color: #b7b7bd; }
+.card .use { padding-bottom: 14px; }
+
+@media (max-width: 640px) {
+  .top, main { padding-left: 16px; padding-right: 16px; }
+  .grid { grid-template-columns: 1fr; }
+  .lane { grid-template-columns: 112px 1fr; gap: 10px; }
+  .lane-name em { display: none; }
+  .stage { grid-template-columns: 120px 1fr; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>Motion feels</h1>
+    <p>How it moves: 14 feels made of a speed and an easing curve. <a href="effects-demo.html">What moves: the effects →</a></p>
+  </div>
+  <div class="controls">
+    <span class="seg-label">Speed</span>
+    <div class="seg" role="group" aria-label="Playback speed">
+      <button data-slow="1" aria-pressed="true">1×</button>
+      <button data-slow="2" aria-pressed="false">½×</button>
+      <button data-slow="4" aria-pressed="false">¼×</button>
+    </div>
+    <button class="pill-btn" id="replayAll">Replay all</button>
+  </div>
+</header>
+
+<main>
+  <p class="lead">A feel is <b>a speed plus a curve</b>. The same curve at a different speed is a different feel: <b>expo.out</b> at 300 ms is Snappy; a similar curve at 1.2 s is Luxurious. In every card the same square and the same card move; only the timing changes.</p>
+
+  <section class="race" aria-label="All feels side by side">
+    <div class="race-head"><h2>Race: all 14 over the same distance</h2><button class="pill-btn primary" id="playRace">Play race</button></div>
+    <div id="lanes"></div>
+  </section>
+
+  <div id="groups"></div>
+</main>
+
+<script>
+(() => {
+  // ---------- Easing functions (used for the graphs, and turned into CSS where CSS has no keyword) ----------
+  const bez = (x1, y1, x2, y2) => {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+    const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    const X = s => ((ax * s + bx) * s + cx) * s, Y = s => ((ay * s + by) * s + cy) * s, dX = s => (3 * ax * s + 2 * bx) * s + cx;
+    return t => {
+      if (t <= 0) return 0; if (t >= 1) return 1;
+      let s = t;
+      for (let i = 0; i < 8; i++) { const e = X(s) - t, d = dX(s); if (Math.abs(e) < 1e-6 || Math.abs(d) < 1e-6) break; s -= e / d; }
+      if (Math.abs(X(s) - t) > 1e-4) { let lo = 0, hi = 1; s = t; for (let i = 0; i < 40; i++) { if (X(s) < t) lo = s; else hi = s; s = (lo + hi) / 2; } }
+      return Y(s);
+    };
+  };
+  // Damped spring that settles within the duration (zeta = damping ratio, T = seconds)
+  const spring = (zeta, T) => { const w = 4 / (zeta * T), wd = w * Math.sqrt(1 - zeta * zeta);
+    return t => { if (t >= 1) return 1; const s = t * T; return 1 - Math.exp(-zeta * w * s) * (Math.cos(wd * s) + (zeta * w / wd) * Math.sin(wd * s)); }; };
+  // GSAP's elastic.out(amplitude, period)
+  const elastic = (a, p) => { const s = p / (2 * Math.PI) * Math.asin(1 / a);
+    return t => t <= 0 ? 0 : t >= 1 ? 1 : a * Math.pow(2, -10 * t) * Math.sin((t - s) * 2 * Math.PI / p) + 1; };
+  // GSAP's bounce.out
+  const bounce = t => { const n = 7.5625, d = 2.75;
+    if (t < 1 / d) return n * t * t;
+    if (t < 2 / d) return n * (t -= 1.5 / d) * t + .75;
+    if (t < 2.5 / d) return n * (t -= 2.25 / d) * t + .9375;
+    return n * (t -= 2.625 / d) * t + .984375; };
+  const toLinear = (f, n = 120) => 'linear(' + Array.from({ length: n + 1 }, (_, i) => (i === n ? 1 : f(i / n)).toFixed(4)).join(', ') + ')';
+
+  // ---------- The 14 feels (same values as the motion-feels skill, references/feels.md) ----------
+  const GROUPS = {
+    A: { name: 'Quick and responsive', c: 'var(--gA)' },
+    B: { name: 'Smooth and calm', c: 'var(--gB)' },
+    C: { name: 'Big moments', c: 'var(--gC)' },
+    D: { name: 'Playful and physical', c: 'var(--gD)' },
+    E: { name: 'Mechanical', c: 'var(--gE)' }
+  };
+  const FEELS = [
+    { g: 'A', name: 'Crisp', dur: 150, f: bez(.33, 1, .68, 1), css: 'cubic-bezier(0.33, 1, 0.68, 1)', gsap: 'power2.out',
+      shape: 'Fast start, quick soft stop. Done before you notice it.', say: 'instant, crisp, responsive, tight', use: 'buttons, toggles, hovers, small feedback' },
+    { g: 'A', name: 'Snappy', dur: 300, f: bez(.16, 1, .3, 1), css: 'cubic-bezier(0.16, 1, 0.3, 1)', gsap: 'expo.out',
+      shape: 'Shoots out, then settles fast.', say: 'snappy, quick, decisive, punchy', use: 'menus, cards, bold entrances' },
+    { g: 'A', name: 'Springy', dur: 600, f: spring(.7, .6), css: 'spring (bounce 0.3, 0.6 s)', gsap: 'no built-in spring · closest back.out(1.2)',
+      shape: 'Quick, a small overshoot, then it settles. Feels physical.', say: 'springy, lively, physical, iOS-like', use: 'drawers, sheets, drag and release' },
+
+    { g: 'B', name: 'Smooth', dur: 500, f: bez(.65, 0, .35, 1), css: 'cubic-bezier(0.65, 0, 0.35, 1)', gsap: 'power2.inOut',
+      shape: 'Soft start, soft stop, even in between.', say: 'smooth, fluid, polished, even', use: 'moving things across the screen, slides, carousels' },
+    { g: 'B', name: 'Gentle', dur: 700, f: bez(.61, 1, .88, 1), css: 'cubic-bezier(0.61, 1, 0.88, 1)', gsap: 'sine.out',
+      shape: 'Easy start, the speed fades out slowly.', say: 'gentle, soft, calm, relaxed', use: 'fades, captions, calm and wellness brands' },
+    { g: 'B', name: 'Luxurious', dur: 1200, f: bez(.22, 1, .36, 1), css: 'cubic-bezier(0.22, 1, 0.36, 1)', gsap: 'power4.out',
+      shape: 'Quick start, then a very long, slow settle.', say: 'luxurious, silky, elegant, unhurried, expensive', use: 'editorial reveals, hero images, fashion' },
+    { g: 'B', name: 'Floaty', dur: 2000, f: bez(.37, 0, .63, 1), css: 'cubic-bezier(0.37, 0, 0.63, 1)', gsap: 'sine.inOut',
+      shape: 'Slow and even, with no clear start or stop.', say: 'floaty, dreamy, weightless, drifting', use: 'background loops, ambient shapes' },
+
+    { g: 'C', name: 'Dramatic', dur: 1200, f: bez(.87, 0, .13, 1), css: 'cubic-bezier(0.87, 0, 0.13, 1)', gsap: 'expo.inOut',
+      shape: 'Long wind-up, a rush through the middle, long settle.', say: 'dramatic, powerful, cinematic, bold', use: 'page transitions, full-screen wipes, big reveals' },
+    { g: 'C', name: 'Wind-up', dur: 800, f: bez(.68, -.6, .32, 1.6), css: 'cubic-bezier(0.68, -0.6, 0.32, 1.6)', gsap: 'back.inOut(1.7)',
+      shape: 'Pulls back first, then overshoots the end.', say: 'anticipation, wind-up, cartoony, intentional', use: 'playful transitions, characters, attention moments' },
+
+    { g: 'D', name: 'Pop', dur: 450, f: bez(.34, 1.56, .64, 1), css: 'cubic-bezier(0.34, 1.56, 0.64, 1)', gsap: 'back.out(1.7)',
+      shape: 'Shoots past the end and comes back once.', say: 'pop, cheeky, energetic, overshoot', use: 'badges, icons, success states, stickers' },
+    { g: 'D', name: 'Elastic', dur: 1000, f: elastic(1, .3), css: 'linear(…) from elastic.out', gsap: 'elastic.out(1, 0.3)',
+      shape: 'Wobbles several times before it settles.', say: 'elastic, jelly, wobbly, rubbery', use: 'toys, games, playful brands; one element at a time' },
+    { g: 'D', name: 'Bounce', dur: 900, f: bounce, css: 'linear(…) from bounce.out', gsap: 'bounce.out',
+      shape: 'Drops and bounces like a ball landing.', say: 'bouncy, gravity, dropped, cartoon', use: 'things landing: falling icons, dropped cards' },
+
+    { g: 'E', name: 'Mechanical', dur: 1000, f: t => t, css: 'linear', gsap: 'none',
+      shape: 'The same speed from start to end.', say: 'mechanical, robotic, constant, steady', use: 'marquees, loaders, spinners, scroll-scrubbed motion' },
+    { g: 'E', name: 'Stepped', dur: 900, f: t => t >= 1 ? 1 : Math.floor(t * 6) / 6, css: 'steps(6)', gsap: 'steps(6)',
+      shape: 'Jumps in 6 frames, nothing in between.', say: 'stepped, choppy, retro, stop-motion, digital', use: 'pixel art, counters, typewriters, glitch' }
+  ];
+  FEELS.forEach(x => {
+    x.id = x.name.toLowerCase().replace(/[^a-z]/g, '');
+    x.ease = /^(cubic-bezier|linear$|steps)/.test(x.css) ? x.css : toLinear(x.f);
+  });
+
+  let slow = 1;
+
+  // ---------- Build the page from the list ----------
+  const graphSVG = x => {
+    const X = t => 12 + t * 100, Y = v => 92 - v * 54;
+    const d = Array.from({ length: 201 }, (_, i) => { const t = i / 200; return (i ? 'L' : 'M') + X(t).toFixed(2) + ' ' + Y(x.f(t)).toFixed(2); }).join(' ');
+    return `<svg class="graph" viewBox="0 0 120 120" aria-hidden="true">
+      <line class="guide" x1="12" x2="112" y1="${Y(1)}" y2="${Y(1)}"/>
+      <path class="axis" d="M12 8 V${Y(0)} H112"/>
+      <text x="2" y="${Y(1) + 2}">1</text><text x="2" y="${Y(0) + 2}">0</text>
+      <text x="96" y="${Y(0) + 10}">time</text>
+      <path class="curve" d="${d}"/>
+      <circle class="gdot" r="3.2" cx="${X(0)}" cy="${Y(0)}"/>
+    </svg>`;
+  };
+
+  document.getElementById('lanes').innerHTML = FEELS.map(x =>
+    `<div class="lane" style="--c:${GROUPS[x.g].c}"><div class="lane-name">${x.name}<em>${x.dur} ms</em></div><div class="lane-track"><div class="lane-dot" data-id="${x.id}"></div></div></div>`).join('');
+
+  document.getElementById('groups').innerHTML = Object.entries(GROUPS).map(([g, G]) =>
+    `<h2 class="group" style="--c:${G.c}"><i></i>${g} · ${G.name}</h2><section class="grid">` +
+    FEELS.filter(x => x.g === g).map(x => `
+      <article class="card" data-id="${x.id}" style="--c:${G.c}">
+        <div class="stage">${graphSVG(x)}
+          <div class="probes"><div class="track"><div class="sq"></div></div><div class="enter"><div class="mini"><i></i><div style="flex:1"><b></b><b></b></div></div></div></div>
+        </div>
+        <div class="meta"><span class="name">${x.name}</span><span class="speed-tag">${x.dur} ms</span><button class="replay">Replay</button></div>
+        <p class="shape">${x.shape}</p>
+        <p><b>Say:</b> ${x.say}</p>
+        <p class="vals">CSS ${x.css}<br>GSAP ${x.gsap}</p>
+        <p class="use"><b>Use for:</b> ${x.use}</p>
+      </article>`).join('') + `</section>`).join('');
+
+  // ---------- Playing ----------
+  const byId = Object.fromEntries(FEELS.map(x => [x.id, x]));
+  const running = new WeakMap();
+
+  function playCard(card) {
+    const x = byId[card.dataset.id], dur = x.dur * slow;
+    const sq = card.querySelector('.sq'), track = card.querySelector('.track'), mini = card.querySelector('.mini');
+    const dist = track.clientWidth - sq.offsetWidth;
+    sq.getAnimations().forEach(a => a.cancel()); mini.getAnimations().forEach(a => a.cancel());
+    sq.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${dist}px)` }], { duration: dur, easing: x.ease, fill: 'forwards', delay: 150 });
+    mini.animate([{ transform: 'translateY(24px) scale(.94)' }, { transform: 'none' }], { duration: dur, easing: x.ease, fill: 'forwards', delay: 150 });
+    mini.animate([{ opacity: 0 }, { opacity: 1 }], { duration: Math.min(dur * .6, 250 * slow), easing: 'ease-out', fill: 'forwards', delay: 150 });
+    // Dot along the curve, in step with the square
+    const dot = card.querySelector('.gdot'), start = performance.now() + 150;
+    const token = {}; running.set(card, token);
+    const tick = now => {
+      if (running.get(card) !== token) return;
+      const t = Math.max(0, Math.min(1, (now - start) / dur));
+      dot.setAttribute('cx', (12 + t * 100).toFixed(2));
+      dot.setAttribute('cy', (92 - x.f(t) * 54).toFixed(2));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function playRace() {
+    document.querySelectorAll('.lane-dot').forEach(dot => {
+      const x = byId[dot.dataset.id], dist = dot.parentElement.clientWidth - dot.offsetWidth;
+      dot.getAnimations().forEach(a => a.cancel());
+      dot.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${dist}px)` }], { duration: x.dur * slow, easing: x.ease, fill: 'forwards', delay: 200 });
+    });
+  }
+
+  const cards = [...document.querySelectorAll('.card')];
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting && !e.target._played) { e.target._played = true; playCard(e.target); }
+  }), { threshold: .5 });
+  cards.forEach(c => { c.querySelector('.replay').addEventListener('click', () => playCard(c)); io.observe(c); });
+
+  document.getElementById('playRace').addEventListener('click', playRace);
+  document.getElementById('replayAll').addEventListener('click', () => { playRace(); cards.forEach(playCard); });
+  document.querySelectorAll('[data-slow]').forEach(b => b.addEventListener('click', () => {
+    slow = parseFloat(b.dataset.slow);
+    document.querySelectorAll('[data-slow]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+    playRace();
+  }));
+  setTimeout(playRace, 400);
+})();
+</script>
+</body>
+</html>
