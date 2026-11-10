@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Website motion in everyday words: say how an animation should feel and get the right speed and easing curve (CSS, GSAP, springs), plus when-not-to-animate rules, build rules and a motion review checklist.",
   "author": {
-    "name": "Nuša Kutnjak"
+    "name": "Nusa Kutnjak"
   },
   "homepage": "https://github.com/nusakutnjak/motion-feels",
   "repository": "https://github.com/nusakutnjak/motion-feels",
